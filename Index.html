@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Identificación de Órdenes por Voz con JS</title>
+    <!-- Enlaces a los archivos CSS de Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+        crossorigin="anonymous">
+</head>
+
+<body>
+    <!-- Navbar de Bootstrap -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Buenos días!! ¿Qué va a ordenar?</a>
+    </nav>
+
+    <div class="container mt-1">
+        <!-- Contenido principal de la aplicación -->
+        <h1>Identificación de Órdenes por Voz</h1>
+        <p>Habla para identificar la Voz:</p>
+        <div id="resultContainer" class="mt-3"></div>
+    </div>
+
+    <div class="container mt-1">
+        <span class="fst-italic" id="controltexto">Control de Texto</span>
+    </div>
+
+    <!-- Footer de la aplicación -->
+    <footer class="bg-dark text-light text-center mt-5 py-2">
+        <p>Jasmin Viveros Gómez &copy; 2024</p>
+    </footer>
+
+    <!-- Enlaces a los archivos JS de Bootstrap y tu script personalizado -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const resultContainer = document.getElementById('resultContainer');
+            let processingCommand = false; // Bandera para controlar si se está procesando un comando
+
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.continuous = true; // Mantener el reconocimiento activo
+                recognition.interimResults = true;
+                recognition.lang = 'es-ES';
+
+                recognition.onstart = function () {
+                    console.log('Reconocimiento de voz iniciado.');
+                };
+
+                recognition.onresult = function (event) {
+                    if (processingCommand) return; // Si ya se está procesando un comando, salir
+
+                    const result = event.results[event.results.length - 1][0].transcript;
+                    resultContainer.innerHTML = `<p>Orden identificada: ${result}</p>`;
+                    const controltexto = document.getElementById('controltexto');
+
+                    if (result.toLowerCase().includes('Yasmín')) {
+                        resultContainer.innerHTML += '<p>¡Hola, Yasmín!</p>';
+                        controltexto.classList.add('fs-3');
+                        processingCommand = true; // Establecer la bandera en true mientras se procesa el comando
+                    } else if (result.toLowerCase().includes('abrir youtube')) {
+                        if (!processingCommand) { // Evitar abrir múltiples pestañas
+                            window.open('https://www.youtube.com/', '_blank'); // Abrir en una nueva pestaña
+                            processingCommand = true;
+                        }
+                    } else if (result.toLowerCase().includes('abrir aplicación')) {
+                        // No establecer processingCommand en true para no bloquear el reconocimiento de voz
+                        window.open('https://www.youtube.com/', '_blank'); // Abrir en una nueva pestaña
+                    } else {
+                        resultContainer.innerHTML += '<p>Reconocido.</p>';
+                    }
+                };
+
+                recognition.onerror = function (event) {
+                    resultContainer.innerHTML = '<p>Error en el reconocimiento de voz. Inténtalo de nuevo.</p>';
+                };
+
+                recognition.start(); // Iniciar el reconocimiento de voz automáticamente
+            } else {
+                resultContainer.innerHTML = '<p>Lo siento, tu navegador no soporta el reconocimiento de voz.</p>';
+            }
+        });
+    </script>
+</body>
+
+</html>
