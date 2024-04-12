@@ -1,114 +1,58 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // Obtener referencias a los elementos HTML necesarios
-    const orderResultDiv = document.getElementById('orderResult');
-    const controlTexto = document.getElementById("controlTexto");
+import {insertarJson} from './Mockapi.js';
 
-    // Verificar la compatibilidad del navegador
-    if ('webkitSpeechRecognition' in window) {
-        let recognition; // Variable para almacenar la instancia de reconocimiento
-
-        // Función para iniciar el reconocimiento de voz
-        function startRecognition() {
-            // Verificar si el reconocimiento ya está en curso
-            if (recognition && recognition.running) {
-                console.log("El reconocimiento ya está en curso.");
-                return; // No hacer nada si el reconocimiento ya está en curso
-            }
-
-            // Crear una nueva instancia de reconocimiento de voz
-            recognition = new webkitSpeechRecognition();
-            recognition.lang = 'es-ES'; // Establecer el idioma del reconocimiento
-
-            // Definir el comportamiento cuando se detecta un resultado de reconocimiento de voz
-            recognition.onresult = function (event) {
-                // Obtener el texto reconocido y convertirlo a minúsculas para simplificar las comparaciones
-                const result = event.results[0][0].transcript.toLowerCase();
-                console.log('Orden identificada:', result);
-
-                // Realizar acciones según el texto reconocido
-                switch (true) {
-                    // Caso: "Verdana"
-                    case result.includes("verdana"):
-                        orderResultDiv.innerHTML = <p>Orden identificada: <strong>${result}</strong></p>;
-                        controlTexto.style.fontFamily = 'Verdana';
-                        insertarJson("Tipo de letra Verdana");
-                        break;
-                    // Caso: "Gmail"
-                    case result.includes("gmail") || result.includes("Gmail"):
-                        orderResultDiv.innerHTML = <p>Orden identificada: <strong>${result}</strong></p>;
-                        window.open('https://mail.google.com/');
-                        insertarJson("Abrir Gmail");
-                        break;
-                    // Caso: "Quitar"
-                    case result.includes("quitar"):
-                        orderResultDiv.innerHTML = <p>Orden identificada: <strong>${result}</strong></p>;
-                        closeCurrentTab(); // Llamar a la función para cerrar la pestaña actual
-                        break;
-                    // Caso: "Cerrar"
-                    case result.includes("cerrar"):
-                        orderResultDiv.innerHTML = <p>Orden identificada: <strong>${result}</strong></p>;
-                        closeBrowser(); // Llamar a la función para cerrar el navegador
-                        break;
-                    // Caso: "Youtube"
-                    case result.includes("youtube"):
-                        orderResultDiv.innerHTML = <p>Orden identificada: <strong>${result}</strong></p>;
-                        window.open('https://www.youtube.com/');
-                        insertarJson("Abrir YouTube");
-                        break;
-                    // Agregar más casos según sea necesario
-                    default:
-                        console.log("Orden no reconocida:", result);
-                        break;
-                }
-            };
-
-            // Definir el comportamiento cuando no se detectan resultados durante 2 segundos
-            recognition.onnomatch = function (event) {
-                console.log('No se detectó ninguna orden.');
-            };
-
-            // Iniciar el reconocimiento de voz
-            recognition.start();
+// Función para interpretar los comandos de voz
+function interpretCommand(command) {
+    if (command.includes("yasmín") || command.includes("jasmine") ) {
+        // Aquí puedes agregar el código para abrir Google en una nueva pestaña
+        if (command.includes('abre google')){
+            window.open("https://www.google.com", "_blank"); 
+            insertarJson('se abrio una nueva pestaña con google')
         }
+        if (command.includes('abre youtube')){
+            window.open("https://www.youtube.com", "_blank");
+            insertarJson('se abrio youtube exitosamente') 
+        }
+        if (command.includes('abre una ventana y ciérrala en 3 segundos')){
+            const ventana = window.open('');
+            // Cerrar la ventana después de 3 segundos
+            setTimeout(function () {
+                ventana.close();
+            }, 3000);
+            insertarJson('Se abrio una ventana nueva y se cerro a los 3 segundos') 
+        }
+        if (command.includes("abre una nueva ventana con un tamaño de 1000 por 800") || command.includes('abre una nueva ventana con un tamaño de 1000 x 800')){
+            // Abrir una nueva ventana con dimensiones específicas y sin barras de herramientas
+            window.open('https://www.google.com', '_blank', 'width=1000,height=800,toolbar=no');
+            insertarJson('Se abrio la nueva pagina en el tamaño solicitado') 
+        }
+        if (command.includes("abre una nueva ventana con un tamaño de 350 por 500") || command.includes('abre una nueva ventana con un tamaño de 150 x 300')){
+            // Abrir una njueva ventana con dimensiones específicas y sin barras de herramientas
+            window.open('https://www.youtube.com', '_blank', 'width=150,height=300,toolbar=no');
+            insertarJson('se abrio youtube en el tamaño solicitado') 
+        }
+    }
+}
 
-        // Llamar a la función para iniciar el reconocimiento de voz
-        startRecognition();
+// Función para iniciar el reconocimiento de voz
+function startSpeechRecognition() {
+    const recognition = new webkitSpeechRecognition() || new SpeechRecognition();
+    recognition.lang = 'es-ES'; // Configura el idioma de reconocimiento
 
-        // Reiniciar el reconocimiento de voz cada 2 segundos si no se detectan resultados
-        setInterval(function () {
-            recognition.stop(); // Detener el reconocimiento actual
-            startRecognition(); // Iniciar un nuevo reconocimiento
-        }, 2000);
-    } else {
-        console.log('El reconocimiento de voz no es soportado por este navegador.');
+    recognition.onresult = function(event) {
+        const result = event.results[event.results.length - 1];
+        const command = result[0].transcript.trim().toLowerCase();
+        console.log("Comando reconocido:", command);
+        interpretCommand(command);
     }
 
-    // Función para cerrar la pestaña actual
-    function closeCurrentTab() {
-        window.close();
+    recognition.onend = function() {
+        console.log("Reconocimiento de voz detenido. Reiniciando...");
+        startSpeechRecognition(); // Reinicia el reconocimiento de voz para que esté siempre escuchando
     }
 
-    // Función para cerrar el navegador
-    function closeBrowser() {
-        window.top.close();
-    }
+    recognition.start();
+    console.log("Escuchando...");
+}
 
-    // Función para enviar los datos a la API
-    function insertarJson(ingresos) {
-        return fetch('https://66176aa2ed6b8fa43482988c.mockapi.io/Voz', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ Pagina })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error al subir el recurso');
-            }
-            return response.json();
-        })
-        .then(data => console.log('Recurso subido exitosamente:', data))
-        .catch(error => console.error('Error:', error));
-    }
-});
+// Iniciar el reconocimiento de voz al cargar la página
+window.onload = startSpeechRecognition;
